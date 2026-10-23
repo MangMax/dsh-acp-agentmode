@@ -1,0 +1,131 @@
+# dsh-acp-agentmode — patch layer for the automation-only ACP profile.
+#
+# Installed into a profile, this bundle turns `dsh --profile acp` from a
+# zero-option, host-plane-composed app into one that selects an agent preset:
+#
+#   dsh --profile acp --agentmode <preset>
+#
+# Three changes, in order: take over the app's command line, move the agent
+# plane behind presets (the same split @deepseek-ai/dsh-web-app applies to the
+# Web surface), and mount the selection registry that the shipped preset
+# declaration files below register into.
+
+# ── 1. The app's command line ──────────────────────────────────────────────
+# The shipped provider owns a zero-option commander program, so any extra flag
+# is rejected before the ACP bridge starts. Disable it and let this bundle's
+# plugin (row `acp-agentmode`, inserted below) own the flag family and publish
+# the same `acpAppStartup` service the `acp` row injects.
+- id: acp-app-startup
+  disabled: true
+
+# ── 2. The agent plane moves behind agent presets ──────────────────────────
+# Every row below composes what ONE agent contributes to the host registries:
+# its tools, its prompt sections, its delegation backends. The base keeps them
+# for single-session surfaces that compose their agent process-wide; an ACP
+# process serves several sessions, so the identical set must move into the
+# preset each session mounts. Disabling rather than deleting is deliberate: the
+# base is shared, and an absent row would silently reappear after a reorder.
+#
+# This list mirrors `@deepseek-ai/dsh-web-app/cordis.patch.yml`
+# ("the agent plane moves behind agent presets"). A row renamed upstream makes
+# the corresponding patch a no-op with a loader warning rather than a failure.
+- id: tool-plugin-manager
+  disabled: true
+
+- id: tool-bash
+  disabled: true
+
+- id: tool-pwsh
+  disabled: true
+
+- id: tool-jobs
+  disabled: true
+
+- id: tool-fs
+  disabled: true
+
+- id: tool-fs-search
+  disabled: true
+
+- id: skill-filesystem
+  disabled: true
+
+- id: tool-skill
+  disabled: true
+
+- id: command-goal
+  disabled: true
+
+- id: tool-goal
+  disabled: true
+
+- id: plan-mode
+  disabled: true
+
+- id: compaction-basic
+  disabled: true
+
+- id: command-compact
+  disabled: true
+
+- id: tool-result-pruner
+  disabled: true
+
+- id: tool-subagent-control
+  disabled: true
+
+- id: tool-subagent-list-agents
+  disabled: true
+
+- id: tool-subagent
+  disabled: true
+
+- id: tool-subagent-fork
+  disabled: true
+
+- id: workflow-ptc
+  disabled: true
+
+- id: tool-workflow
+  disabled: true
+
+- id: agent-instructions
+  disabled: true
+
+- id: tool-todo
+  disabled: true
+
+- id: tool-web
+  disabled: true
+
+# ── 2b. Host-plane support rows the preset declarations depend on ──────────
+# Moving the agent plane into presets leaves some *host* services that the
+# preset rows consume: subagent model selection and the plugin inventory. The
+# Web surface inserts the same rows for the same reason. (The schedule service
+# is deliberately absent: @deepseek-ai/dsh-schedule requires the Web-only
+# sessionController, so the preset snapshots disable `tool-schedule` instead.)
+- insert:
+    - id: subagent-model-selection-settings
+      name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'
+
+    - id: plugin-inventory
+      name: '@deepseek-ai/dsh-host-plugin-inventory'
+
+# ── 3. The preset selection registry ───────────────────────────────────────
+# The declarations follow as separate patch files under `presets/`, listed
+# after this file in package.json `dsh.bundle.patch`. `default` is only the
+# fallback when no --agentmode is passed; this bundle never rewrites the
+# user's persisted selection.
+- insert:
+    - id: agent-preset-registry
+      name: '@deepseek-ai/dsh-agent-preset-registry'
+      config:
+        default: standard
+
+# ── 4. The provider that owns --agentmode ──────────────────────────────────
+# Runs in the Host plane: parses the flag, validates it against the registry,
+# publishes `acpAppStartup`, then binds each new Agent to the preset from the
+# serial `agent/created` event (before the session's queued input is released).
+- insert:
+    - id: acp-agentmode
+      name: 'dsh-acp-agentmode'

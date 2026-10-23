@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "ACP 智能体预设",
+    "description": "为 ACP 模式（dsh --profile acp）增加 --agentmode <preset> 参数，一次启动即可选定每个新 ACP 会话使用的 agent preset。"
+  }
+}

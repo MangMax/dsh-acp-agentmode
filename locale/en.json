@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "ACP Agent Mode",
+    "description": "Adds --agentmode <preset> to the automation-only ACP profile so one launch chooses the agent preset every new ACP session runs."
+  }
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="ACP agent mode">
+  <rect x="4" y="8" width="56" height="48" rx="8" fill="#0f172a"/>
+  <rect x="4" y="8" width="56" height="48" rx="8" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <path d="M16 22l8 10-8 10" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="34" cy="42" r="3" fill="#fbbf24"/>
+  <rect x="42" y="20" width="10" height="8" rx="4" fill="#22c55e"/>
+  <rect x="42" y="32" width="10" height="8" rx="4" fill="#475569"/>
+</svg>
