@@ -154,6 +154,51 @@ registry 解析"新会话用哪个 preset"的公式是 `selectedDefault ?? defau
 
 未实测：`session/resume` 的**非空白**会话（`mount` 分支）需要先产生一轮真实模型对话。
 
+## 权限（沙箱 / 审批）
+
+ACP profile 里权限由 `permission` 行（`@deepseek-ai/dsh-permission-presets`）决定，它把 sandbox 与 approval 绑成一个预设。**acp profile 默认没有 `defaultPreset`**，所以默认值是推断出来的：
+
+| 项                  | 默认值            |
+| ------------------- | ----------------- |
+| `permission/preset` | `workspace-write` |
+| `sandbox/mode`      | `workspace-write` |
+| `approval/policy`   | `ask`             |
+
+要改成**完全访问**，在 `~/.dsh/profiles/acp/cordis.patch.yml` 里补 `defaultPreset`（`config` 是整体替换，整张 `presets` 表必须重述）：
+
+```yaml
+- id: permission
+  name: '@deepseek-ai/dsh-permission-presets'
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: danger-full-access
+```
+
+只想本次生效就不改 profile，把它存成文件后用 launcher flag 叠加（`--patch` 必须在 app 参数之前）：
+
+```bash
+dsh --profile acp --patch ~/.dsh/full-access.yml
+```
+
+验证方式是读会话日志的前三个事件：
+
+```
+permission/preset : danger-full-access
+sandbox/mode      : danger-full-access
+approval/policy   : never
+```
+
+三个要注意的点：ACP 客户端的 `session/new` 只暴露 `model` 与 `reasoning_effort`，**没有**权限选择面（`/permission` 这类命令 ACP 也不支持），所以权限只能在 profile 默认或 `--patch` 上设；`danger-full-access` 自带 `approval: never`，因此不再产生审批请求；一个 ACP 进程服务多个会话，该默认对全部会话生效。
+
 ## 已知能力边界
 
 - **设定按 profile 隔离**：`selectedDefault` 只存在于写入它的那个 profile；跨 profile 没有共享存储（同机 desktop/web/acp 各自独立）。要跨 profile 统一，用共享 home patch，代价是 Web 表单此后改不动该字段。
