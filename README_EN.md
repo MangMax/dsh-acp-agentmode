@@ -151,6 +151,51 @@ Real end-to-end (0.2.1-rc.2 on this machine, minimal ACP client, no model call):
 
 Not exercised: the **non-blank** `session/resume` branch (the `mount` path) needs one real model turn first.
 
+## Permissions (sandbox / approval)
+
+Permissions are decided by the `permission` row (`@deepseek-ai/dsh-permission-presets`), which bundles a sandbox mode with an approval policy. **The acp profile sets no `defaultPreset`**, so the value is inferred:
+
+| Knob                | Default           |
+| ------------------- | ----------------- |
+| `permission/preset` | `workspace-write` |
+| `sandbox/mode`      | `workspace-write` |
+| `approval/policy`   | `ask`             |
+
+To run at **full access**, add `defaultPreset` in `~/.dsh/profiles/acp/cordis.patch.yml` (a patch replaces `config` wholesale, so the whole `presets` table must be restated):
+
+```yaml
+- id: permission
+  name: '@deepseek-ai/dsh-permission-presets'
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: danger-full-access
+```
+
+For a one-off run, leave the profile alone and layer the same YAML with a launcher flag (`--patch` must precede app arguments):
+
+```bash
+dsh --profile acp --patch ~/.dsh/full-access.yml
+```
+
+Verify by reading the first three events of a session log:
+
+```
+permission/preset : danger-full-access
+sandbox/mode      : danger-full-access
+approval/policy   : never
+```
+
+Three things to know: ACP's `session/new` exposes only `model` and `reasoning_effort` — there is **no** permission picker (`/permission` style commands are unsupported over ACP), so permissions are set at the profile default or via `--patch`; `danger-full-access` carries `approval: never`, so no approval requests are raised; one ACP process serves several sessions, so the default applies to all of them.
+
 ## Known limits
 
 - **Settings are isolated per profile**: `selectedDefault` exists only in the profile that wrote it; there is no cross-profile store (desktop/web/acp are independent on the same machine). A shared home patch unifies them, at the cost of the Web form no longer being able to change that field.
