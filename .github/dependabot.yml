@@ -1,0 +1,27 @@
+# Keep the toolchain and actions current without surprise major bumps.
+# Grouped so a PR is reviewable in one pass; the CI gate decides if it is safe.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      toolchain:
+        patterns:
+          - vite-plus
+          - vitest
+          - typescript
+          - '@types/*'
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

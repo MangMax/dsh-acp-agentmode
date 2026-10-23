@@ -1,0 +1,3 @@
+# The maintainer reviews every change. Branch protection also requires a code
+# owner review, so a pull request cannot merge without @MangMax approving it.
+* @MangMax
